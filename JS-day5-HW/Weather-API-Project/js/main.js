@@ -1,34 +1,59 @@
 const getData = async (city_name) => {
 
-    /*
-    const key = 'SET THIS TO YOUR KEY FOR GITHUB UPLOAD PURPOSES
-    */
+    //INSERT API KEY HERE
+    const key = '7b3d4b67be408e9edb3095cced38b10a'
+    
     console.log(isNaN(city_name))
     let current_response
     let forecast_response
+    //Checks if value entered is NaN (which treats it like a word/city name) or a number (which treats it like a zipcode)
+    //Pulls current weatherinfo
     if(isNaN(city_name)){
         current_response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${city_name}&units=imperial&appid=${key}`)
     } else{
         current_response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?zip=${city_name}&units=imperial&appid=${key}`)
     }
 
+    //Sets longitude/latitude to be used for 4-day forecast
     longitude = current_response.data.coord.lon
     latitude = current_response.data.coord.lat
 
     console.log(longitude)
     console.log(latitude)
-    
+    //pulls 4-day forecast
     forecast_response = await axios.get(`https://api.openweathermap.org/data/2.5/onecall?lat=${latitude}&lon=${longitude}&exclude=minutely,alerts&units=imperial&appid=${key}`)
     console.log(current_response.data)
-    return create_table([current_response.data, forecast_response.data])
+    return create_weather([current_response.data, forecast_response.data])
 }
 
+//Has a list of cities, picks one to be used as the starter weather info when the page is loaded for the first time
+const starter_weather = () => {
+    let cities = [
+    'London', 
+    'New York City', 
+    'Paris', 
+    'Moscow', 
+    'Tokyo',
+    'Dubai',
+    'Singapore',
+    'Barcelona',
+    'Boston'
+    ]
+    let random_city = cities[Math.floor(Math.random() * cities.length)];
+    return random_city
+}
+
+
+//Sets references for class names that will be used in html inserts
 const DOM_ELEMENTS = {
     current_weather_row: '.current-weather-row',
     forecast_row: '.forecast-row',
     weather_img_row: '.weather-img-row',
 }
 
+
+//uses that 3-character weather code the API uses, in order to determine weather-type and day/night status
+//switch/case that sets image to be used, depending on what weather code is provided by api
 const set_image = (weatherid) => {
     switch(weatherid){
         case '01d':{
@@ -44,7 +69,7 @@ const set_image = (weatherid) => {
         }
 
         case '02n':{
-            return `<img src="images/slightcloud.jpg" alt="weather image" class="img-fluid">`
+            return `<img src="images/slightcloudnight.jpg" alt="weather image" class="img-fluid">`
         }
 
         case '03d':{
@@ -52,7 +77,7 @@ const set_image = (weatherid) => {
         }
 
         case '03n':{
-            return `<img src="images/slightcloud.jpg" alt="weather image" class="img-fluid">`
+            return `<img src="images/slightcloudnight.jpg" alt="weather image" class="img-fluid">`
         }
 
         case '04d':{
@@ -60,7 +85,7 @@ const set_image = (weatherid) => {
         }
 
         case '04n':{
-            return `<img src="images/cloudy.jpg" alt="weather image" class="img-fluid">`
+            return `<img src="images/slightcloudnight.jpg" alt="weather image" class="img-fluid">`
         }
 
         case '09d':{
@@ -92,7 +117,7 @@ const set_image = (weatherid) => {
         }
 
         case '14n':{
-            return `<img src="images/snow.jpg" alt="weather image" class="img-fluid">`
+            return `<img src="images/snownight.jpg" alt="weather image" class="img-fluid">`
         }
 
         case '50d':{
@@ -100,12 +125,92 @@ const set_image = (weatherid) => {
         }
 
         case '50n':{
-            return `<img src="images/fog.jpg" alt="weather image" class="img-fluid">`
+            return `<img src="images/fognight.jpg" alt="weather image" class="img-fluid">`
         }
     }
 }
 
-const create_table = (response) => {
+
+//Similar to set_image function, sets weather_text string to be inserted into HTML
+const set_weather_text = (weathertextid) => {
+    switch(weathertextid){
+        case '01d':{
+            return `Clear Sun`
+        }
+
+        case '01n':{
+            return `Clear Night`
+        }
+
+        case '02d':{
+            return `Few Clouds`
+        }
+
+        case '02n':{
+            return `Few Clouds`
+        }
+
+        case '03d':{
+            return `Cloudy`
+        }
+
+        case '03n':{
+            return `Cloudy`
+        }
+
+        case '04d':{
+            return `Heavy Clouds`
+        }
+
+        case '04n':{
+            return `Heavy Clouds`
+        }
+
+        case '09d':{
+            return `Rain`
+        }
+
+        case '09n':{
+            return `Rain`
+        }
+
+        case '10d':{
+            return `Rain`
+        }
+
+        case '10n':{
+            return `Rain`
+        }
+
+        case '11d':{
+            return `Thunderstorm`
+        }
+
+        case '11n':{
+            return `Thunderstorm`
+        }
+
+        case '13d':{
+            return `Snow`
+        }
+
+        case '14n':{
+            return `Snow`
+        }
+
+        case '50d':{
+            return `Fog`
+        }
+
+        case '50n':{
+            return `Fog`
+        }
+    }
+}
+
+//sets up window with all weather info 
+const create_weather = (response) => {
+    //runs function to clear first, to get rid of any pre-existing info/html in relevant elements
     clear_data()
     document.getElementById('full-body-bg').classList.add('bg-secondary')
     
@@ -128,12 +233,14 @@ const create_table = (response) => {
         }
     
     const weather_img_html = set_image(weather_icon_status)
+    const weather_text = set_weather_text(weather_icon_status)
 
     document.querySelector(DOM_ELEMENTS.weather_img_row).insertAdjacentHTML('beforeend', weather_img_html)
     
+    //sets HTML for current weather based on current, min/max temps and weather icon
     const html = `
     <div class="col-12">
-          <h4>Current Weather:</h4>
+          <h4>Current Weather: ${weather_text}</h4>
         </div>
     <div class="row mb-3 mt-3">
     <div class="col-6"><h5>Location:</h5> ${current_response.name}</div>
@@ -148,19 +255,6 @@ const create_table = (response) => {
     <div class="col-6"><h5>Lo</h5> ${Math.round(current_response.main.temp_min)}&#730; F</div>
     </div>
     `
-/*
-    const html = `
-    <td>${current_response.name}</td>
-    <td>${Math.round(current_response.main.temp)}&#730; F</td>
-
-    <td>${Math.round(current_response.main.temp_max)}&#730; F</td>
-    <td>${Math.round(current_response.main.temp_min)}&#730; F</td>
-    
-    <td>${current_response.main.humidity}%</td>
-    <td>${current_display_time}</td>
-    <td><img src="https://openweathermap.org/img/wn/${weather_icon_status}@2x.png" alt="current weather" class="weather-preview mx-auto my-auto"></td>
-    `
-*/
 
     document.querySelector(DOM_ELEMENTS.current_weather_row).insertAdjacentHTML('beforeend', html)
 
@@ -172,9 +266,9 @@ const create_table = (response) => {
         if(forecast_counter == 0){
             day_name = 'Today'
         } else if(forecast_counter == 1){
-            day_name = 'Tmrw'
+            day_name = 'Tomorrow'
         } else{
-            forecast_counter_pos = `+${forecast_counter}`
+            forecast_counter_pos = `+${forecast_counter} Day`
             day_name = forecast_counter_pos
         }
         let forecast_html = `
@@ -204,15 +298,18 @@ const create_table = (response) => {
 
 }
 
+//Is called by 'Show Forecast' button, passes in user-provided string to generate weather with getData()
 const load_data = () => {
     let query_city = document.getElementById("city_name").value
     getData(query_city)
 }
 
+//Clears existing data, is run at the beginning of each pull of weather info 
 const clear_data = () => {
     document.querySelector(DOM_ELEMENTS.forecast_row).innerHTML = ''
     document.querySelector(DOM_ELEMENTS.weather_img_row).innerHTML = ''
     document.querySelector(DOM_ELEMENTS.current_weather_row).innerHTML = ''
 }
 
-//make conditional to check for isNaN, for input to see if it is zipcode or not
+//Generates weather for a random location upon first load of page
+getData(starter_weather())
