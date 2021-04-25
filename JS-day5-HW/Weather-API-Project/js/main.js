@@ -1,7 +1,7 @@
 const getData = async (city_name) => {
 
     //INSERT API KEY HERE
-    const key = '7b3d4b67be408e9edb3095cced38b10a'
+    //const key = 'INSERTYOURAPIHERE'
     
     console.log(isNaN(city_name))
     let current_response
